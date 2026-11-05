@@ -1,4 +1,9 @@
-const socket = io('https://realtime-chat-uijw.onrender.com');
+let socket = null;
+try {
+  socket = io('https://realtime-chat-uijw.onrender.com');
+} catch(e) {
+  console.log('socket load hoyni', e);
+}
 
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
@@ -16,7 +21,7 @@ joinBtn.addEventListener('click', () => {
   const name = usernameInput.value.trim();
   if (!name) return alert('নাম লিখো');
   myName = name;
-  socket.emit('join', name);
+  if (socket) socket.emit('join', name);
   loginScreen.classList.add('hidden');
   chatScreen.classList.remove('hidden');
 });
@@ -29,7 +34,7 @@ messageForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const text = messageInput.value.trim();
   if (!text) return;
-  socket.emit('chatMessage', text);
+  if (socket) socket.emit('chatMessage', text);
   messageInput.value = '';
 });
 
@@ -64,14 +69,13 @@ function updateUsers(list) {
   onlineCount.textContent = 'অনলাইন: ' + list.length;
 }
 
-socket.on('message', addMessage);
-socket.on('chatMessage', addMessage);
-socket.on('newMessage', addMessage);
-socket.on('userList', updateUsers);
-socket.on('updateUsers', updateUsers);
-socket.on('onlineCount', (n) => {
-  onlineCount.textContent = 'অনলাইন: ' + n;
-});
-socket.on('connect', () => {
-  console.log('Connected', socket.id);
-});
+if (socket) {
+  socket.on('message', addMessage);
+  socket.on('chatMessage', addMessage);
+  socket.on('newMessage', addMessage);
+  socket.on('userList', updateUsers);
+  socket.on('updateUsers', updateUsers);
+  socket.on('onlineCount', (n) => {
+    onlineCount.textContent = 'অনলাইন: ' + n;
+  });
+}
