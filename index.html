@@ -5,104 +5,116 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>রিয়েলটাইম চ্যাট</title>
 <style>
-  body { font-family: sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
-  .hidden { display: none !important; }
-  #login-screen { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; text-align: center; }
-  #chat-screen { max-width: 700px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; }
-  input { padding: 10px; width: 80%; margin: 5px; }
-  button { padding: 10px 20px; cursor: pointer; }
-  #messages { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
-  #message-form { display: flex; gap: 5px; }
-  #message-form input { flex: 1; }
+    * { margin:0; padding:0; box-sizing:border-box; font-family: Arial, sans-serif; }
+  body { background:#0f172a; color:#fff; height:100vh; display:flex; flex-direction:column; }
+  #loginScreen { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; }
+  #loginScreen h1 { font-size:28px; margin-bottom:10px; }
+  #loginScreen p { color:#94a3b8; margin-bottom:25px; }
+  #usernameInput { width:100%; max-width:350px; padding:14px; border-radius:10px; border:none; font-size:16px; margin-bottom:15px; }
+  #joinBtn { width:100%; max-width:350px; padding:14px; border:none; border-radius:10px; background:#22c55e; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; }
+  #chatScreen { display:none; flex:1; flex-direction:column; height:100vh; }
+  #chatHeader { padding:15px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; }
+  #chatBody { flex:1; display:flex; overflow:hidden; }
+  #messages { flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .msg { background:#1e293b; padding:10px 14px; border-radius:12px; max-width:80%; }
+  .msg b { color:#22c55e; font-size:13px; }
+  .msg span { font-size:11px; color:#94a3b8; margin-left:8px; }
+  .msg div { margin-top:3px; }
+  .system { text-align:center; color:#94a3b8; font-size:13px; }
+  #userList { width:150px; background:#1e293b; padding:15px; overflow-y:auto; }
+  #userList h3 { font-size:14px; margin-bottom:10px; color:#94a3b8; }
+  #userList div { font-size:14px; margin-bottom:8px; }
+  #messageForm { display:flex; padding:10px; gap:10px; background:#1e293b; }
+  #messageInput { flex:1; padding:12px; border-radius:10px; border:none; font-size:15px; }
+  #sendBtn { padding:12px 20px; border:none; border-radius:10px; background:#22c55e; color:#fff; font-weight:bold; cursor:pointer; }
+  @media(max-width:600px){ #userList{ display:none; } }
 </style>
 </head>
 <body>
 
-<div id="login-screen">
-  <h2>চ্যাটে প্রবেশ করো</h2>
-  <input id="username-input" placeholder="তোমার নাম লিখো">
-  <br>
-  <button id="join-btn" type="button">প্রবেশ করো</button>
+<div id="loginScreen">
+  <h1>💬 রিয়েলটাইম চ্যাট</h1>
+  <p>নাম লিখে চ্যাটে প্রবেশ করো</p>
+  <input id="usernameInput" placeholder="তোমার নাম লেখো" maxlength="20">
+  <button id="joinBtn">প্রবেশ করো</button>
 </div>
 
-<div id="chat-screen" class="hidden">
-  <h3>রিয়েলটাইম চ্যাট <span id="online-count">অনলাইন: 0</span></h3>
-  <div id="messages"></div>
-  <form id="message-form">
-    <input id="message-input" placeholder="মেসেজ লিখো...">
-    <button type="submit">পাঠাও</button>
+<div id="chatScreen">
+  <div id="chatHeader"><span>চ্যাট রুম</span><span id="onlineCount">অনলাইন: ০</span></div>
+  <div id="chatBody">
+    <div id="messages"></div>
+    <div id="userList"><h3>অনলাইন</h3><div id="users"></div></div>
+  </div>
+  <form id="messageForm">
+    <input id="messageInput" placeholder="মেসেজ লেখো..." autocomplete="off">
+    <button id="sendBtn" type="submit">পাঠাও</button>
   </form>
-  <h4>অনলাইন ইউজার</h4>
-  <ul id="user-list"></ul>
 </div>
 
-<script src="https://realtime-chat-uijw.onrender.com/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <script>
-let socket = null;
-try { socket = io('https://realtime-chat-uijw.onrender.com'); } catch(e) {}
+var socket = io('https://realtime-chat-uijw.onrender.com');
+var myName = '';
 
-const loginScreen = document.getElementById('login-screen');
-const chatScreen = document.getElementById('chat-screen');
-const usernameInput = document.getElementById('username-input');
-const joinBtn = document.getElementById('join-btn');
-const messagesDiv = document.getElementById('messages');
-const messageForm = document.getElementById('message-form');
-const messageInput = document.getElementById('message-input');
-const userList = document.getElementById('user-list');
-const onlineCount = document.getElementById('online-count');
+document.getElementById('joinBtn').onclick = function() {
+  var name = document.getElementById('usernameInput').value.trim();
+  if (!name) { alert('নাম লেখো'); return; }
+  myName = name;
+  socket.emit('join', name);
+  document.getElementById('loginScreen').style.display = 'none';
+  var cs = document.getElementById('chatScreen');
+  cs.style.display = 'flex';
+  document.getElementById('messageInput').focus();
+};
 
-joinBtn.addEventListener('click', () => {
-  const name = usernameInput.value.trim();
-  if (!name) return alert('নাম লিখো');
-  if (socket) socket.emit('join', name);
-  loginScreen.classList.add('hidden');
-  chatScreen.classList.remove('hidden');
-});
-
-messageForm.addEventListener('submit', (e) => {
+document.getElementById('messageForm').onsubmit = function(e) {
   e.preventDefault();
-  const text = messageInput.value.trim();
+  var input = document.getElementById('messageInput');
+  var text = input.value.trim();
   if (!text) return;
-  if (socket) socket.emit('chatMessage', text);
-  messageInput.value = '';
-});
+  socket.emit('chatMessage', text);
+  input.value = '';
+  input.focus();
+};
 
 function addMessage(data) {
-  let name = 'Unknown', text = '';
-  if (typeof data === 'string') text = data;
-  else if (data) {
-    name = data.username || data.user || data.name || name;
-    text = data.message || data.text || data.msg || '';
+  var box = document.getElementById('messages');
+  if (typeof data === 'string') {
+    var d = document.createElement('div');
+    d.className = 'system';
+    d.textContent = data;
+    box.appendChild(d);
+  } else {
+    var m = document.createElement('div');
+    m.className = 'msg';
+    var name = data.username || 'Anonymous';
+    var text = data.text || data.message || '';
+    var time = data.time || '';
+    m.innerHTML = '<b></b><span></span><div></div>';
+    m.querySelector('b').textContent = name;
+    m.querySelector('span').textContent = time;
+    m.querySelector('div').textContent = text;
+    box.appendChild(m);
   }
-  if (!text) return;
-  const div = document.createElement('div');
-  div.innerHTML = '<b></b>: <span></span>';
-  div.querySelector('b').textContent = name;
-  div.querySelector('span').textContent = text;
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  box.scrollTop = box.scrollHeight;
 }
 
-function updateUsers(list) {
-  if (!Array.isArray(list)) return;
-  userList.innerHTML = '';
-  list.forEach(u => {
-    const name = typeof u === 'string' ? u : (u.username || u.name || '');
-    if (!name) return;
-    const li = document.createElement('li');
-    li.textContent = name;
-    userList.appendChild(li);
+socket.on('chatMessage', addMessage);
+socket.on('system message', addMessage);
+socket.on('chat history', function(list) {
+  document.getElementById('messages').innerHTML = '';
+  list.forEach(addMessage);
+});
+socket.on('userList', function(list) {
+  var u = document.getElementById('users');
+  u.innerHTML = '';
+  list.forEach(function(name) {
+    var d = document.createElement('div');
+    d.textContent = '🟢 ' + name;
+    u.appendChild(d);
   });
-  onlineCount.textContent = 'অনলাইন: ' + list.length;
-}
-
-if (socket) {
-  socket.on('message', addMessage);
-  socket.on('chatMessage', addMessage);
-  socket.on('newMessage', addMessage);
-  socket.on('userList', updateUsers);
-  socket.on('updateUsers', updateUsers);
-}
+  document.getElementById('onlineCount').textContent = 'অনলাইন: ' + list.length;
+});
 </script>
 </body>
 </html>
