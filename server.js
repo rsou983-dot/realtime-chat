@@ -2,10 +2,14 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const cors = require('cors');
 
 const app = express();
+app.use(cors());
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -18,7 +22,6 @@ io.on('connection', (socket) => {
     const name = (username || 'Anonymous').trim().slice(0, 20) || 'Anonymous';
     users.set(socket.id, name);
     socket.username = name;
-
     io.emit('user list', Array.from(users.values()));
     socket.broadcast.emit('system message', `${name} joined the chat`);
     socket.emit('system message', `Welcome, ${name}!`);
@@ -26,9 +29,8 @@ io.on('connection', (socket) => {
 
   socket.on('chat message', (msg) => {
     const name = users.get(socket.id) || 'Anonymous';
-    const text = (msg || '').toString().trim().slice(0, 500);
+    const text = msg.toString().trim().slice(0, 500);
     if (!text) return;
-
     io.emit('chat message', {
       username: name,
       text,
@@ -43,11 +45,10 @@ io.on('connection', (socket) => {
       io.emit('user list', Array.from(users.values()));
       io.emit('system message', `${name} left the chat`);
     }
-    console.log('User disconnected:', socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Chat server running at http://localhost:${PORT}`);
+  console.log(`Server running on ${PORT}`);
 });
