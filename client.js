@@ -1,4 +1,4 @@
-const socket = io("https://realtime-chat-server.onrender.com");
+const socket = io("https://realtime-chat-server-caok.onrender.com");
 const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const usernameInput = document.getElementById('username-input');
