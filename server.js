@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const app = express();
 app.use(cors());
@@ -13,29 +14,50 @@ const io = new Server(server, {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// MongoDB Connect
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.log('MongoDB Error:', err.message));
+
+// Message Model
+const messageSchema = new mongoose.Schema({
+  username: String,
+  text: String,
+  time: String,
+  createdAt: { type: Date, default: Date.now }
+});
+const Message = mongoose.model('Message', messageSchema);
+
 const users = new Map();
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('User connected:', socket.id);
+
+  // পুরানো মেসেজ পাঠাও
+  const history = await Message.find().sort({ createdAt: 1 }).limit(50);
+  socket.emit('chat history', history);
 
   socket.on('join', (username) => {
     const name = (username || 'Anonymous').trim().slice(0, 20) || 'Anonymous';
     users.set(socket.id, name);
     socket.username = name;
     io.emit('user list', Array.from(users.values()));
-    socket.broadcast.emit('system message', `${name} joined the chat`);
+    io.emit('system message', `${name} joined the chat`);
     socket.emit('system message', `Welcome, ${name}!`);
   });
 
-  socket.on('chat message', (msg) => {
+  socket.on('chat message', async (msg) => {
     const name = users.get(socket.id) || 'Anonymous';
     const text = msg.toString().trim().slice(0, 500);
     if (!text) return;
-    io.emit('chat message', {
-      username: name,
-      text,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    });
+
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    
+    // MongoDB তে সেভ করো
+    const newMsg = new Message({ username: name, text, time });
+    await newMsg.save();
+
+    io.emit('chat message', { username: name, text, time });
   });
 
   socket.on('disconnect', () => {
