@@ -34,7 +34,7 @@ messageForm.addEventListener('submit', (e) => {
 });
 
 function addMessage(data) {
-  let name = 'সিস্টেম';
+  let name = 'Unknown';
   let text = '';
   if (typeof data === 'string') {
     text = data;
@@ -54,7 +54,7 @@ function addMessage(data) {
 function updateUsers(list) {
   if (!Array.isArray(list)) return;
   userList.innerHTML = '';
-  list.forEach((u) => {
+  list.forEach(u => {
     const name = typeof u === 'string' ? u : (u.username || u.name || '');
     if (!name) return;
     const li = document.createElement('li');
@@ -68,11 +68,10 @@ socket.on('message', addMessage);
 socket.on('chatMessage', addMessage);
 socket.on('newMessage', addMessage);
 socket.on('userList', updateUsers);
-socket.on('users', updateUsers);
 socket.on('updateUsers', updateUsers);
 socket.on('onlineCount', (n) => {
   onlineCount.textContent = 'অনলাইন: ' + n;
 });
 socket.on('connect', () => {
-  console.log('Connected:', socket.id);
+  console.log('Connected', socket.id);
 });
