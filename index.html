@@ -1,41 +1,41 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>রিয়েলটাইম চ্যাট</title>
-<link rel="stylesheet" href="style.css" />
+<style>
+  body { font-family: sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+  .hidden { display: none !important; }
+  #login-screen { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 10px; text-align: center; }
+  #chat-screen { max-width: 700px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; }
+  input { padding: 10px; width: 80%; margin: 5px; }
+  button { padding: 10px 20px; cursor: pointer; }
+  #messages { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+  #message-form { display: flex; gap: 5px; }
+  #message-form input { flex: 1; }
+</style>
 </head>
 <body>
-<div id="login-screen" class="screen">
-  <div class="login-box">
-    <h1>চ্যাটে প্রবেশ করো</h1>
-    <input type="text" id="username-input" placeholder="তোমার নাম লিখো..." maxlength="20" autocomplete="off" />
-    <button id="join-btn">প্রবেশ করো</button>
-  </div>
+
+<div id="login-screen">
+  <h2>চ্যাটে প্রবেশ করো</h2>
+  <input id="username-input" placeholder="তোমার নাম লিখো">
+  <br>
+  <button id="join-btn">প্রবেশ করো</button>
 </div>
 
-<div id="chat-screen" class="screen hidden">
-  <header>
-    <h2>রিয়েলটাইম চ্যাট</h2>
-    <div id="online-count">অনলাইন: 0</div>
-  </header>
-
-  <div class="main">
-    <aside id="users-panel">
-      <h3>অনলাইন ব্যবহারকারী</h3>
-      <ul id="user-list"></ul>
-    </aside>
-
-    <section class="chat-area">
-      <div id="messages"></div>
-      <form id="message-form">
-        <input type="text" id="message-input" placeholder="মেসেজ লিখো..." autocomplete="off" maxlength="500" />
-        <button type="submit">পাঠাও</button>
-      </form>
-    </section>
-  </div>
+<div id="chat-screen" class="hidden">
+  <h3>রিয়েলটাইম চ্যাট <span id="online-count">অনলাইন: 0</span></h3>
+  <div id="messages"></div>
+  <form id="message-form">
+    <input id="message-input" placeholder="মেসেজ লিখো...">
+    <button type="submit">পাঠাও</button>
+  </form>
+  <h4>অনলাইন ইউজার</h4>
+  <ul id="user-list"></ul>
 </div>
+
 <script src="https://realtime-chat-uijw.onrender.com/socket.io/socket.io.js"></script>
 <script src="client.js"></script>
 </body>
