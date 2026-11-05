@@ -41,30 +41,30 @@ io.on('connection', async (socket) => {
     const name = (username || 'Anonymous').trim().slice(0, 20) || 'Anonymous';
     users.set(socket.id, name);
     socket.username = name;
-    io.emit('user list', Array.from(users.values()));
+    io.emit('userList', Array.from(users.values()));
     io.emit('system message', `${name} joined the chat`);
     socket.emit('system message', `Welcome, ${name}!`);
   });
 
-  socket.on('chat message', async (msg) => {
+  socket.on('chatMessage', async (msg) => {
     const name = users.get(socket.id) || 'Anonymous';
     const text = msg.toString().trim().slice(0, 500);
     if (!text) return;
 
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
+
     // MongoDB তে সেভ করো
     const newMsg = new Message({ username: name, text, time });
     await newMsg.save();
 
-    io.emit('chat message', { username: name, text, time });
+    io.emit('chatMessage', { username: name, text, time });
   });
 
   socket.on('disconnect', () => {
     const name = users.get(socket.id);
     users.delete(socket.id);
     if (name) {
-      io.emit('user list', Array.from(users.values()));
+      io.emit('userList', Array.from(users.values()));
       io.emit('system message', `${name} left the chat`);
     }
   });
