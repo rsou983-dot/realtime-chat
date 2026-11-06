@@ -12,8 +12,13 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// এই লাইনটাই সবচেয়ে গুরুত্বপূর্ণ
+// Static files
 app.use(express.static(__dirname));
+
+// রুট রুটে সরাসরি index.html পাঠাও (এটা খুব জরুরি)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // MongoDB Connect
 mongoose.connect(process.env.MONGO_URI)
