@@ -12,7 +12,8 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
+// Static files root থেকে serve করা হচ্ছে (public ফোল্ডার লাগবে না)
+app.use(express.static(__dirname));
 
 // MongoDB Connect
 mongoose.connect(process.env.MONGO_URI)
@@ -34,8 +35,12 @@ io.on('connection', async (socket) => {
   console.log('User connected:', socket.id);
 
   // পুরানো মেসেজ পাঠাও
-  const history = await Message.find().sort({ createdAt: 1 }).limit(50);
-  socket.emit('chat history', history);
+  try {
+    const history = await Message.find().sort({ createdAt: 1 }).limit(50);
+    socket.emit('chat history', history);
+  } catch (err) {
+    console.log('History error:', err.message);
+  }
 
   socket.on('join', (username) => {
     const name = (username || 'Anonymous').trim().slice(0, 20) || 'Anonymous';
@@ -54,8 +59,12 @@ io.on('connection', async (socket) => {
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
     // MongoDB তে সেভ করো
-    const newMsg = new Message({ username: name, text, time });
-    await newMsg.save();
+    try {
+      const newMsg = new Message({ username: name, text, time });
+      await newMsg.save();
+    } catch (err) {
+      console.log('Save error:', err.message);
+    }
 
     io.emit('chatMessage', { username: name, text, time });
   });
