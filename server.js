@@ -12,7 +12,7 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
-// Static files root থেকে serve করা হচ্ছে (public ফোল্ডার লাগবে না)
+// এই লাইনটাই সবচেয়ে গুরুত্বপূর্ণ
 app.use(express.static(__dirname));
 
 // MongoDB Connect
@@ -34,7 +34,6 @@ const users = new Map();
 io.on('connection', async (socket) => {
   console.log('User connected:', socket.id);
 
-  // পুরানো মেসেজ পাঠাও
   try {
     const history = await Message.find().sort({ createdAt: 1 }).limit(50);
     socket.emit('chat history', history);
@@ -58,7 +57,6 @@ io.on('connection', async (socket) => {
 
     const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-    // MongoDB তে সেভ করো
     try {
       const newMsg = new Message({ username: name, text, time });
       await newMsg.save();
